@@ -221,27 +221,40 @@ rclone mount \
 
 ### --vfs-cache-mode writes
 
-In this mode files opened for read only are still read directly from the remote, write only and read/write files are buffered to disk first. This mode should support all normal file system operations. If an upload fails it will be retried at exponentially increasing intervals up to 1 minute.
+In this mode files opened for read only are still read directly from the remote, write only and read/write files are 
+buffered to disk first. This mode should support all normal file system operations. If an upload fails it will be 
+retried at exponentially increasing intervals up to 1 minute.
 
-VFS cache mode of writes is recommended, so that application can have maximum compatibility of using remote storage as a local disk, when write is finished, file is closed, it is uploaded to backend remote after vfs-write-back duration has elapsed. If rclone is quit or dies with files that haven't been uploaded, these will be uploaded next time rclone is run with the same flags.
+VFS cache mode of writes is recommended, so that application can have maximum compatibility of using remote storage 
+as a local disk, when write is finished, file is closed, it is uploaded to backend remote after vfs-write-back duration
+has elapsed. If rclone is quit or dies with files that haven't been uploaded, these will be uploaded next time rclone
+is run with the same flags.
 
 ### --tpslimit float
 
 Limit transactions per second to this number. Default is 0 which is used to mean unlimited transactions per second.
 
-A transaction is roughly defined as an API call; its exact meaning will depend on the backend. For HTTP based backends it is an HTTP PUT/GET/POST/etc and its response. For FTP/SFTP it is a round trip transaction over TCP.
+A transaction is roughly defined as an API call; its exact meaning will depend on the backend. For HTTP based backends 
+it is an HTTP PUT/GET/POST/etc and its response. For FTP/SFTP it is a round trip transaction over TCP.
 
-For example, to limit rclone to 10 transactions per second use --tpslimit 10, or to 1 transaction every 2 seconds use --tpslimit 0.5.
+For example, to limit rclone to 10 transactions per second use --tpslimit 10, or to 1 transaction every 2 seconds 
+use --tpslimit 0.5.
 
-Use this when the number of transactions per second from rclone is causing a problem with the cloud storage provider (e.g. getting you banned or rate limited or throttled).
+Use this when the number of transactions per second from rclone is causing a problem with the cloud storage 
+provider (e.g. getting you banned or rate limited or throttled).
 
-This can be very useful for rclone mount to control the behaviour of applications using it. Object storage allows roughly 100 tps per tenant, so to be on safe side, it will be wise to set this at 50. (tune it per region, as per region settings can change)
+This can be very useful for rclone mount to control the behaviour of applications using it. Let's guess and say Object 
+storage allows roughly 100 tps per tenant, so to be on safe side, it will be wise to set this at 50. (tune it to actuals per 
+region)
 
 ### --vfs-fast-fingerprint
 
-If you use the --vfs-fast-fingerprint flag then rclone will not include the slow operations in the fingerprint. This makes the fingerprinting less accurate but much faster and will improve the opening time of cached files. If you are running a vfs cache over local, s3, object storage or swift backends then using this flag is recommended.
+If you use the --vfs-fast-fingerprint flag then rclone will not include the slow operations in the fingerprint. This
+makes the fingerprinting less accurate but much faster and will improve the opening time of cached files. If you are 
+running a vfs cache over local, s3, object storage or swift backends then using this flag is recommended.
 
-Various parts of the VFS use fingerprinting to see if a local file copy has changed relative to a remote file. Fingerprints are made from:
+Various parts of the VFS use fingerprinting to see if a local file copy has changed relative to a remote file. 
+Fingerprints are made from:
 - size
 - modification time
 - hash
@@ -279,7 +292,8 @@ none                 : ignored
 
 ## Step 6b: Run as a Service Daemon: Configure systemd entry for Rclone mount
 
-If you are familiar with configuring systemd unit files, you can also configure the each rclone mount into a systemd units file.
+If you are familiar with configuring systemd unit files, you can also configure the each rclone mount into a 
+systemd units file.
 various examples in git search: https://github.com/search?l=Shell&q=rclone+unit&type=Code
 ```shell
 tee "/etc/systemd/system/rclonebucketa.service" > /dev/null <<EOF
