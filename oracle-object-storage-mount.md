@@ -1,6 +1,4 @@
-# Mounting Object Storage Buckets as Local File System
-
-
+# Mounting OCI Object Storage Buckets as Local File System
 
 [rclone mount](https://rclone.org/commands/rclone_mount/) allows Linux, FreeBSD, macOS and Windows to mount any of 
 Rclone's cloud storage systems as a file system with [FUSE](https://github.com/libfuse/libfuse). There are many 
