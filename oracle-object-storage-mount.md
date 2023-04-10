@@ -47,7 +47,7 @@ ln -s /usr/bin/rclone /sbin/mount.rclone
 ## Step 2: Setup Rclone Configuration file
 
 Let's assume you want to access 3 buckets from the oci compute instance using instance principal provider as means of 
-authenticating with object storage service. 
+authenticating with object storage service.
 
 - namespace-a, bucket-a,
 - namespace-b, bucket-b,
@@ -135,9 +135,9 @@ Now that you have a dynamic group, you need to add a policy allowing what permis
 In our case, we want this dynamic-group to access object-storage. So create a policy now.
  
 ```shell
-allow dynamic-group rclone-dynamic-group to use object-family in compartment compartment-a
-allow dynamic-group rclone-dynamic-group to use object-family in compartment compartment-b
-allow dynamic-group rclone-dynamic-group to use object-family in compartment compartment-c
+allow dynamic-group rclone-dynamic-group to manage object-family in compartment compartment-a
+allow dynamic-group rclone-dynamic-group to manage object-family in compartment compartment-b
+allow dynamic-group rclone-dynamic-group to manage object-family in compartment compartment-c
 ```
 
 After you add the policy, now ensure the rclone can list files in your bucket, if not please troubleshoot any mistakes 
