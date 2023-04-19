@@ -1,4 +1,4 @@
-# Mounting OCI Object Storage Buckets as Local File System
+# Mounting OCI Object Storage Buckets as Local File System and then via NFS Server
 
 [rclone mount](https://rclone.org/commands/rclone_mount/) allows Linux, FreeBSD, macOS and Windows to mount any of 
 Rclone's cloud storage systems as a file system with [FUSE](https://github.com/libfuse/libfuse). There are many 
@@ -7,6 +7,9 @@ over fuse is in [fuse-applications](https://en.wikipedia.org/wiki/Filesystem_in_
 
 In this confluence page example we will showcase how to mount Oracle Object Storage buckets as local file system in 
 OCI compute Instance using rclone tool.
+
+You will also learn how to export the rclone mounts as NFS mount, so that other NFS client can access them.
+
 
 ## Step 1 : Install Rclone
 
@@ -312,7 +315,7 @@ WantedBy=multi-user.target
 EOF
 ```
 
-## Step 7: Mount Nanny, for resiliency, recover from process crash.
+## Step 7: Optional: Mount Nanny, for resiliency, recover from process crash.
 Sometimes, rclone process crashes and the mount points are left in dangling state where its mounted but the rclone
 mount process is gone. To clean up the mount point you can force unmount by running this command.
 ```shell
@@ -353,3 +356,117 @@ Ensure the crontab is added, so that above nanny script runs every 5 minutes.
 */5 * * * * /etc/rclone/scripts/rclone_nanny_script.sh
 [opc@base-inst-boot ~]$  
 ```
+
+## Step 8: Optional: Setup NFS server to access the mount points of rclone
+
+Let's say you want to make the rclone mount path /opt/mnt/bucket-a available as a NFS server export so that other 
+clients can access it by using a NFS client.
+
+### Step 8a : Setup NFS server
+
+Install NFS Utils
+```shell
+sudo yum install -y nfs-utils
+```
+
+Export the desired directory via NFS Server in the same machine where rclone has mounted to, ensure NFS serivce has 
+desired permissions to read the directory. If it runs as root, then it will have permissions for sure, but if it runs 
+as separate user then ensure that user has necessary desired privileges.
+```shell
+# this gives opc user and adm (administrators group) ownership to the path, so any user belonging to adm group will be able to access the files.
+[opc@tools ~]$ sudo chown -R opc:adm /opt/mnt/bucket-a/
+[opc@tools ~]$ sudo chmod 764 /opt/mnt/bucket-a/
+ 
+# Not export the mount path of rclone for exposing via nfs server
+# There are various nfs export options that you should keep per desired usage.
+# Syntax is
+# <path> <allowed-ipaddr>(<option>)
+[opc@tools ~]$ cat /etc/exports
+/opt/mnt/bucket-a *(fsid=1,rw)
+ 
+ 
+# Restart NFS server
+[opc@tools ~]$ sudo systemctl restart nfs-server
+ 
+ 
+# Show Export paths
+[opc@tools ~]$ showmount -e
+Export list for tools:
+/opt/mnt/bucket-a *
+ 
+# Know the port NFS server is running as, in this case it's listening on port 2049
+[opc@tools ~]$ sudo rpcinfo -p | grep nfs
+100003 3 tcp 2049 nfs
+100003 4 tcp 2049 nfs
+100227 3 tcp 2049 nfs_acl
+ 
+# Allow NFS service via firewall
+[opc@tools ~]$ sudo firewall-cmd --add-service=nfs --permanent
+Warning: ALREADY_ENABLED: nfs
+success
+[opc@tools ~]$ sudo firewall-cmd --reload
+success
+[opc@tools ~]$
+ 
+# Check status of NFS service
+[opc@tools ~]$ sudo systemctl status nfs-server.service
+● nfs-server.service - NFS server and services
+   Loaded: loaded (/usr/lib/systemd/system/nfs-server.service; enabled; vendor preset: disabled)
+   Active: active (exited) since Wed 2023-04-19 17:59:58 GMT; 13min ago
+  Process: 2833741 ExecStopPost=/usr/sbin/exportfs -f (code=exited, status=0/SUCCESS)
+  Process: 2833740 ExecStopPost=/usr/sbin/exportfs -au (code=exited, status=0/SUCCESS)
+  Process: 2833737 ExecStop=/usr/sbin/rpc.nfsd 0 (code=exited, status=0/SUCCESS)
+  Process: 2833766 ExecStart=/bin/sh -c if systemctl -q is-active gssproxy; then systemctl reload gssproxy ; fi (code=exit>
+  Process: 2833756 ExecStart=/usr/sbin/rpc.nfsd (code=exited, status=0/SUCCESS)
+  Process: 2833754 ExecStartPre=/usr/sbin/exportfs -r (code=exited, status=0/SUCCESS)
+ Main PID: 2833766 (code=exited, status=0/SUCCESS)
+    Tasks: 0 (limit: 48514)
+   Memory: 0B
+   CGroup: /system.slice/nfs-server.service
+ 
+Apr 19 17:59:58 tools systemd[1]: Starting NFS server and services...
+Apr 19 17:59:58 tools systemd[1]: Started NFS server and services.  
+```
+
+### Step 8b : Setup NFS client
+
+Now to connect to the NFS server from a different client machine, ensure the client machine can reach to nfs server machine over tcp port 2049, ensure your subnet network acls allow from desired source IP ranges to destination:2049 port.
+
+In the client machine Mount the external NFS
+
+```shell
+# Install nfs-utils
+[opc@base-inst-boot ~]$ sudo yum install -y nfs-utils
+ 
+# In /etc/fstab, add the below entry
+[opc@base-inst-boot ~]$ cat /etc/fstab | grep nfs
+<ProvideYourIPAddress>:/opt/mnt/bucket-a /opt/mnt/buckert-a nfs rw 0 0
+ 
+# remount so that newly added path gets mounted.
+[opc@base-inst-boot ~]$ sudo mount -av
+/ : ignored
+/boot : already mounted
+/boot/efi : already mounted
+/var/oled : already mounted
+/dev/shm : already mounted
+none : ignored
+/home/opc/share_drive/bucketa: already mounted
+mount.nfs: timeout set for Wed Apr 19 18:25:53 2023
+mount.nfs: trying text-based options 'vers=4.2,addr=129.146.246.215,clientaddr=10.0.0.87'
+/opt/mnt/bucket-a: successfully mounted
+```
+
+### Step 8c : Test Connection
+
+```shell
+# List files to test connection
+[opc@base-inst-boot ~]$ ls -al /opt/mnt/bucket-a
+total 1
+drw-rw----. 1 opc adm 0 Apr 18 17:28 .
+drwxrw-r--. 7 opc adm 85 Apr 18 17:36 ..
+drw-rw----. 1 opc adm 0 Apr 18 17:29 FILES
+-rw-rw----. 1 opc adm 15 Apr 18 18:13 nfs.txt
+```
+
+
+
