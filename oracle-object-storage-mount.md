@@ -10,6 +10,9 @@ OCI compute Instance using rclone tool.
 
 You will also learn how to export the rclone mounts as NFS mount, so that other NFS client can access them.
 
+Usage Pattern :
+
+NFS Client --> NFS Server --> RClone Mount --> OCI Object Storage
 
 ## Step 1 : Install Rclone
 
