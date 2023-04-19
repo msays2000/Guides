@@ -449,11 +449,8 @@ In the client machine Mount the external NFS
 /boot/efi : already mounted
 /var/oled : already mounted
 /dev/shm : already mounted
-none : ignored
 /home/opc/share_drive/bucketa: already mounted
-mount.nfs: timeout set for Wed Apr 19 18:25:53 2023
-mount.nfs: trying text-based options 'vers=4.2,addr=129.146.246.215,clientaddr=10.0.0.87'
-/opt/mnt/bucket-a: successfully mounted
+/opt/mnt/bucket-a: successfully mounted # this is the NFS mount
 ```
 
 ### Step 8c : Test Connection
