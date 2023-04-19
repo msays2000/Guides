@@ -5,7 +5,7 @@ Rclone's cloud storage systems as a file system with [FUSE](https://github.com/l
 tools that implement file system in user space to mount various storage as local file system. Full set of tools built 
 over fuse is in [fuse-applications](https://en.wikipedia.org/wiki/Filesystem_in_Userspace#Applications).
 
-In this confluence page example we will showcase how to mount Oracle Object Storage buckets as local file system in 
+In this page example, we will showcase how to mount Oracle Object Storage buckets as local file system in 
 OCI compute Instance using rclone tool.
 
 You will also learn how to export the rclone mounts as NFS mount, so that other NFS client can access them.
